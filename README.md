@@ -12,17 +12,18 @@ npx expo start
 # press w for browser
 ```
 
-The 3D model is loaded at runtime from Thrixel (no large file in the repo).
+The 3D model loads at runtime from Thrixel (no large file in the repo).
 
 ## Deploy on Render (Static Site)
 
-1. New → **Static Site** → connect this GitHub repo  
-2. Settings:
-   - **Build Command:** `npm install && npx expo export --platform web`
-   - **Publish Directory:** `dist`
-3. Deploy
+**Important:** create a **Static Site** (not a Web Service).
 
-Or use the included `render.yaml` (Blueprint).
+| Setting | Value |
+|--------|--------|
+| Build Command | `npm install && npm run build:web` |
+| Publish Directory | `dist` |
+
+Or connect the repo with the included `render.yaml` Blueprint.
 
 ### Manual static build
 

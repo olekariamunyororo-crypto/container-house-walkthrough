@@ -2,7 +2,7 @@ services:
   - type: web
     name: container-house-walkthrough
     runtime: static
-    buildCommand: npm install && npx expo export --platform web
+    buildCommand: npm install && npm run build:web
     staticPublishPath: dist
     routes:
       - type: rewrite
