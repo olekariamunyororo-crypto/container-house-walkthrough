@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl';
 import { Renderer, loadAsync, THREE } from 'expo-three';
-import { Asset } from 'expo-asset';
 
 interface Props {
   onExit: () => void;
@@ -20,22 +19,18 @@ export function HouseWalkthrough({ onExit }: Props) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mutable state shared with the render loop
   const stateRef = useRef({
-    yaw: Math.PI,          // start looking toward the house
+    yaw: Math.PI,
     pitch: -0.15,
     keys: new Set<string>(),
-    // Mobile look
     looking: false,
     lastX: 0,
     lastY: 0,
-    // Mobile move stick
     stickActive: false,
-    stickX: 0,             // -1 .. 1
+    stickX: 0,
     stickY: 0,
   });
 
-  // ─── Mobile touch handlers ────────────────────────────────────────────────
   const lookPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -52,7 +47,6 @@ export function HouseWalkthrough({ onExit }: Props) {
         const dy = e.nativeEvent.pageY - s.lastY;
         s.lastX = e.nativeEvent.pageX;
         s.lastY = e.nativeEvent.pageY;
-
         const sensitivity = 0.004;
         s.yaw -= dx * sensitivity;
         s.pitch -= dy * sensitivity;
@@ -82,10 +76,8 @@ export function HouseWalkthrough({ onExit }: Props) {
         0.08,
         250
       );
-      // Start a few meters outside, facing the long side of the container
       camera.position.set(0, 1.65, 12);
 
-      // Lights
       const hemi = new THREE.HemisphereLight(0xffffff, 0x445566, 1.0);
       scene.add(hemi);
 
@@ -97,7 +89,6 @@ export function HouseWalkthrough({ onExit }: Props) {
       fill.position.set(-12, 10, -8);
       scene.add(fill);
 
-      // Simple ground
       const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(120, 60),
         new THREE.MeshStandardMaterial({ color: 0x5a7a3a, roughness: 0.95 })
@@ -106,19 +97,18 @@ export function HouseWalkthrough({ onExit }: Props) {
       ground.position.y = 0;
       scene.add(ground);
 
-      // Load model
-      const asset = Asset.fromModule(require('../../assets/container_house.glb'));
-      await asset.downloadAsync();
+      // Public Thrixel URL — no large GLB in the repo
+      const MODEL_URL =
+        'https://api.thrixel.com/api/v1/gallery/1e6b466a-c09e-486e-8ab1-ff96b40b830d/download?format=glb';
 
-      const gltf = await loadAsync(asset.localUri || asset.uri);
+      const gltf = await loadAsync(MODEL_URL);
       const model = gltf.scene;
 
-      // Center the model on the ground
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       model.position.x -= center.x;
       model.position.z -= center.z;
-      model.position.y -= box.min.y; // sit on y=0
+      model.position.y -= box.min.y;
 
       model.traverse((obj: any) => {
         if (obj.isMesh) {
@@ -133,7 +123,6 @@ export function HouseWalkthrough({ onExit }: Props) {
       scene.add(model);
       setReady(true);
 
-      // ─── Web keyboard + pointer lock ───────────────────────────────────────
       if (Platform.OS === 'web' && typeof document !== 'undefined') {
         const canvas: HTMLCanvasElement =
           (gl as any).canvas || document.querySelector('canvas');
@@ -157,7 +146,6 @@ export function HouseWalkthrough({ onExit }: Props) {
         canvas?.addEventListener('click', onClick);
       }
 
-      // ─── Render / simulation loop ──────────────────────────────────────────
       const clock = new THREE.Clock();
       const SPEED = 3.8;
       const EYE = 1.65;
@@ -166,12 +154,10 @@ export function HouseWalkthrough({ onExit }: Props) {
         const dt = Math.min(clock.getDelta(), 0.05);
         const s = stateRef.current;
 
-        // Look
         camera.rotation.order = 'YXZ';
         camera.rotation.y = s.yaw;
         camera.rotation.x = s.pitch;
 
-        // Movement vector in camera space
         let mx = 0;
         let mz = 0;
 
@@ -181,7 +167,6 @@ export function HouseWalkthrough({ onExit }: Props) {
           if (s.keys.has('KeyA') || s.keys.has('ArrowLeft')) mx -= 1;
           if (s.keys.has('KeyD') || s.keys.has('ArrowRight')) mx += 1;
         } else {
-          // Virtual stick values written by the UI
           mx = s.stickX;
           mz = s.stickY;
         }
@@ -194,7 +179,6 @@ export function HouseWalkthrough({ onExit }: Props) {
           const sin = Math.sin(s.yaw);
           const cos = Math.cos(s.yaw);
 
-          // forward = (-sin, 0, -cos), right = (cos, 0, -sin)
           const dx = (-sin * -mz + cos * mx) * SPEED * dt;
           const dz = (-cos * -mz + -sin * mx) * SPEED * dt;
 
@@ -216,7 +200,6 @@ export function HouseWalkthrough({ onExit }: Props) {
     }
   }, []);
 
-  // Simple virtual joystick for mobile
   const stickPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -229,7 +212,7 @@ export function HouseWalkthrough({ onExit }: Props) {
         const x = Math.max(-max, Math.min(max, gesture.dx)) / max;
         const y = Math.max(-max, Math.min(max, gesture.dy)) / max;
         stateRef.current.stickX = x;
-        stateRef.current.stickY = y; // positive dy = backward
+        stateRef.current.stickY = y;
       },
       onPanResponderRelease: () => {
         stateRef.current.stickActive = false;
@@ -243,12 +226,10 @@ export function HouseWalkthrough({ onExit }: Props) {
     <View style={styles.container}>
       <GLView style={styles.gl} onContextCreate={onContextCreate} />
 
-      {/* Full-screen look area (mobile) */}
       {Platform.OS !== 'web' && (
         <View style={StyleSheet.absoluteFill} {...lookPan.panHandlers} />
       )}
 
-      {/* HUD */}
       <View style={styles.hud} pointerEvents="box-none">
         <Pressable style={styles.exitBtn} onPress={onExit}>
           <Text style={styles.exitText}>Exit</Text>
@@ -257,7 +238,7 @@ export function HouseWalkthrough({ onExit }: Props) {
         {!ready && !error && (
           <View style={styles.centerOverlay}>
             <Text style={styles.loadingText}>Loading container house…</Text>
-            <Text style={styles.loadingSub}>41 MB · first load may take a moment</Text>
+            <Text style={styles.loadingSub}>~41 MB · first load may take a moment</Text>
           </View>
         )}
 
@@ -273,7 +254,6 @@ export function HouseWalkthrough({ onExit }: Props) {
           </Text>
         )}
 
-        {/* Virtual joystick (mobile only) */}
         {Platform.OS !== 'web' && ready && (
           <View style={styles.joystickZone} {...stickPan.panHandlers}>
             <View style={styles.joystickBase}>
@@ -288,16 +268,9 @@ export function HouseWalkthrough({ onExit }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0f',
-  },
-  gl: {
-    flex: 1,
-  },
-  hud: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  container: { flex: 1, backgroundColor: '#0a0a0f' },
+  gl: { flex: 1 },
+  hud: { ...StyleSheet.absoluteFillObject },
   exitBtn: {
     position: 'absolute',
     top: 48,
@@ -308,27 +281,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 10,
   },
-  exitText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
-  },
+  exitText: { color: '#fff', fontWeight: '600', fontSize: 15 },
   centerOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(10,10,15,0.88)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  loadingSub: {
-    color: '#999',
-    marginTop: 8,
-    fontSize: 13,
-  },
+  loadingText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  loadingSub: { color: '#999', marginTop: 8, fontSize: 13 },
   errorText: {
     color: '#f87171',
     fontSize: 16,
