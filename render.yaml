@@ -1,10 +1,9 @@
-# Render Static Site — https://render.com/docs/static-sites
 services:
   - type: web
     name: container-house-walkthrough
     runtime: static
-    buildCommand: yarn install && yarn build:web
-    staticPublishPath: ./dist
+    buildCommand: npm install && npx expo export --platform web
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
