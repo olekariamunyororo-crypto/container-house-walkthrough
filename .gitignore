@@ -5,3 +5,5 @@ dist/
 .DS_Store
 assets/*.glb
 assets/*.GLB
+yarn.lock
+package-lock.json

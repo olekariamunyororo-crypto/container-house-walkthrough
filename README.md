@@ -2,33 +2,53 @@
 
 First-person walkthrough of the Thrixel **1-bedroom 40ft container house** model.
 
-## Quick Start
+Works as:
+- Local Expo app (iOS / Android / Web)
+- **Static website** (deployable to Render, Vercel, Netlify, Cloudflare Pages, etc.)
+
+## Quick Start (local)
 
 ```bash
 git clone https://github.com/olekariamunyororo-crypto/container-house-walkthrough.git
 cd container-house-walkthrough
-npm install
+npm install   # or yarn
 ```
 
-### Get the 3D model (required)
+### Add the 3D model (required)
 
-The GLB (~41 MB) is **not** stored in this repo (GitHub file size limits).
+The GLB (~41 MB) is not in the repo (GitHub size limits).
 
-1. Open the original model: https://thrixel.com/create/share/T9ABSuHN5J
-2. Click the download icon → choose **GLB**
-3. Place the file at:
+1. Open https://thrixel.com/create/share/T9ABSuHN5J  
+2. Download icon → **GLB**
+3. Save as:
    ```
    assets/container_house.glb
    ```
 
-Then run:
+Then:
 
 ```bash
 npx expo start
+# press w for browser
 ```
 
-- Press `w` for browser (best controls)
-- Or scan the QR with Expo Go
+## Deploy as static site on Render
+
+1. Push this repo (with `assets/container_house.glb` included, or use a Git LFS / external host).
+2. In Render Dashboard → **New → Static Site**
+3. Connect the GitHub repo
+4. Settings (or use the included `render.yaml`):
+   - **Build Command:** `yarn install && yarn build:web`
+   - **Publish Directory:** `dist`
+5. Deploy
+
+Or manually:
+
+```bash
+yarn install
+yarn build:web          # creates ./dist
+npx serve dist          # test locally
+```
 
 ## Controls
 
@@ -44,9 +64,10 @@ Press **Exit** (top-right) or `Esc` (web) to leave.
 ```
 ├── App.tsx
 ├── assets/
-│   └── container_house.glb   ← add this yourself
+│   └── container_house.glb   ← required (download from Thrixel)
 ├── src/components/
 │   └── HouseWalkthrough.tsx
+├── render.yaml               ← Render static site config
 ├── package.json
 └── README.md
 ```
@@ -55,10 +76,10 @@ Press **Exit** (top-right) or `Esc` (web) to leave.
 
 - Expo SDK 52
 - expo-gl + expo-three + three
-- Pure Three.js first-person camera (no R3F required)
+- Pure Three.js first-person camera
+- Static web export (`expo.web.output: "single"`)
 
 ## Model credit
 
-Shared from Thrixel:  
 https://thrixel.com/create/share/T9ABSuHN5J  
 “1 bedroom 40ft container house” by Pewter Gauge 24
